@@ -19,14 +19,18 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
+  final String _password = "changeit";
   String _token = "";
 
   Future<bool> _login() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
 
-    final assetNames = ['assets/flutter+6.pem', 'assets/flutter+6-key.pem'];
+    final assetNames = [
+      'assets/client-cert+4-client.pem',
+      'assets/client-cert+4-client-key.pem',
+      'assets/rootCA.pem'
+    ];
 
     final List<Uint8List> assetBytes =
         await Future.wait(assetNames.map((assetName) async {
@@ -34,15 +38,16 @@ class _MyHomePageState extends State<MyHomePage> {
       return assetData.buffer.asUint8List();
     }));
 
-    final SecurityContext securityContext =
-        SecurityContext(withTrustedRoots: true)
-          ..useCertificateChainBytes(assetBytes[0])
-          ..usePrivateKeyBytes(assetBytes[1]);
+    final SecurityContext securityContext = SecurityContext()
+      ..useCertificateChainBytes(assetBytes[0])
+      ..usePrivateKeyBytes(assetBytes[1])
+      ..setTrustedCertificatesBytes(assetBytes[2]);
+    HttpClient.enableTimelineLogging = true;
 
-    final HttpClient client = HttpClient();
+    final HttpClient client = HttpClient(context: securityContext);
 
     final request = await client.postUrl(
-      Uri.parse('https://192.168.56.1:5000/home/login'),
+      Uri.parse('https://192.168.0.171:5000/home/login'),
     );
     request.headers.set('Content-Type', 'application/json');
 

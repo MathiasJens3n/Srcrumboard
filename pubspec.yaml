@@ -61,8 +61,9 @@ flutter:
   # To add assets to your application, add an assets section, like this:
 
   assets:
-    - assets/flutter+6.pem
-    - assets/flutter+6-key.pem
+    - assets\client-cert+4-client.pem
+    - assets\client-cert+4-client-key.pem
+    - assets\rootCA.pem
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
