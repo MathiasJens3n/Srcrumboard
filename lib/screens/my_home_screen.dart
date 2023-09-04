@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'scrumboard_screen.dart';
 
+//Create homepage state
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -16,46 +14,57 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+//Homepage screen
 class _MyHomePageState extends State<MyHomePage> {
+  //Controllers for text fields
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final String _password = "changeit";
-  String _token = "";
 
+  //Token to acces API
+  late String _token;
+
+  //Method to handle login process
   Future<bool> _login() async {
+    //Gets information from the text fields via the controller
     final username = _usernameController.text;
     final password = _passwordController.text;
 
+    //List of strings with the path to my local certificates
     final assetNames = [
-      'assets/client-cert+4-client.pem',
-      'assets/client-cert+4-client-key.pem',
+      'assets/local-cert+4-client.pem',
+      'assets/local-cert+4-client-key.pem',
       'assets/rootCA.pem'
     ];
 
+    //Loads the certificates an saves them as a Uint8List
     final List<Uint8List> assetBytes =
         await Future.wait(assetNames.map((assetName) async {
       final ByteData assetData = await rootBundle.load(assetName);
       return assetData.buffer.asUint8List();
     }));
 
+    //Create securityContext
     final SecurityContext securityContext = SecurityContext()
       ..useCertificateChainBytes(assetBytes[0])
       ..usePrivateKeyBytes(assetBytes[1])
       ..setTrustedCertificatesBytes(assetBytes[2]);
     HttpClient.enableTimelineLogging = true;
 
+    //Create Http Client using the newly created security context
     final HttpClient client = HttpClient(context: securityContext);
 
+    //Opens http connection
     final request = await client.postUrl(
-      Uri.parse('https://192.168.0.171:5000/home/login'),
+      Uri.parse('https://192.168.56.1:5000/home/login'),
     );
-    request.headers.set('Content-Type', 'application/json');
 
+    //Create the request
+    request.headers.set('Content-Type', 'application/json');
     final jsonBody =
         jsonEncode({'name': username, 'password': password, 'id': ""});
-
     request.write(jsonBody);
 
+    //Sends request, and reacts to the answer, based on the API response. Or prints the error if something is wrong with the request
     try {
       final response = await request.close();
 
@@ -112,7 +121,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           builder: (context) => const ScrumboardScreen()),
                     );
                   }
-                  ;
                 },
                 child: const Text('Login'),
               ),
